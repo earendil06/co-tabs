@@ -20,6 +20,7 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
         crossorigin="anonymous"></script>
+<script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
 
 <div class="container-fluid" id="app">
   <div class="row">
@@ -36,9 +37,11 @@
         <label for="tabs">Tabs:</label>
         <textarea class="form-control" id="tabs" v-model="tabs" rows="3"></textarea>
       </div>
+  
+      <button onclick="generatePDF()">Download as PDF</button>
     
     </div>
-    <div class="col-9" v-html="result"></div>
+    <div class="col-9" v-html="result" id="result"></div>
   </div>
 
 </div>
@@ -68,6 +71,7 @@
             model: function (value, old) {
                 console.log(value);
                 axios.post('https://cotabs.florentpastor.com/markdown', {
+                // axios.post('http://localhost:3000/markdown', {
                     body: value
                 }).then(response => {
                     const converter = new showdown.Converter();
@@ -80,12 +84,21 @@
             }
         }
     });
+
+    function generatePDF() {
+        // Choose the element that our invoice is rendered in.
+        const element = document.getElementById("result");
+        // Choose the element and save the PDF for our user.
+        html2pdf()
+            .from(element)
+            .save();
+    }
 </script>
 
 <style>
   td {
     border: 1px solid black;
-    font-size: 40px;
+    font-size: 35px;
     padding: 0 25px;
   }
 </style>
