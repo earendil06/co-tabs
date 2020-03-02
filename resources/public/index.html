@@ -67,7 +67,7 @@
         watch: {
             model: function (value, old) {
                 console.log(value);
-                axios.post('http://localhost:3000/markdown', {
+                axios.post('https://cotabs.florentpastor.com/markdown', {
                     body: value
                 }).then(response => {
                     const converter = new showdown.Converter();
