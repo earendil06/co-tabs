@@ -1,5 +1,5 @@
-// const url = 'https://cotabs.florentpastor.com';
-const url = 'http://localhost:3000';
+const url = 'https://cotabs.florentpastor.com';
+// const url = 'http://localhost:3000';
 
 const app = new Vue({
     el: '#app',
