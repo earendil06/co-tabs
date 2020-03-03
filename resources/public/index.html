@@ -24,7 +24,32 @@
         crossorigin="anonymous"></script>
 <script src="https://raw.githack.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
 
+<script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-firestore.js"></script>
+
+
 <div class="container-fluid" id="app">
+  <div class="row">
+    <div class="input-group mb-3 col">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="user">Email</span>
+      </div>
+      <input type="text" class="form-control" aria-label="Sizing example input"
+             aria-describedby="user" id="username">
+    </div>
+    <div class="input-group mb-3 col">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="pass">Password</span>
+      </div>
+      <input type="password" class="form-control" aria-label="Sizing example input"
+             aria-describedby="pass" id="password">
+    </div>
+    <div class="col">
+      <button onclick="login()">Login</button>
+    </div>
+  </div>
+  
   <div class="row">
     <div class="col-3">
       <div class="input-group mb-3">
@@ -54,8 +79,11 @@
       </div>
   
       <img v-bind:src="noteViewer">
-    
-
+      <ul>
+        <li v-for="item in store" @click="clickStore" style="cursor: pointer">
+          {{ item.title }}
+        </li>
+      </ul>
     </div>
     <div class="col-9" v-html="result" id="result"></div>
   </div>
