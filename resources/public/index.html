@@ -11,6 +11,8 @@
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
       integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
+<link rel="stylesheet" href="style.css">
+
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
         integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
         crossorigin="anonymous"></script>
@@ -39,69 +41,28 @@
       </div>
   
       <button onclick="generatePDF()">Download as PDF</button>
+  
+      <div style="padding-top: 30px">Notes:</div>
+      <div class="row">
+        <div class="col" v-for="(l, name) in notes">
+          <ul>
+            <li v-for="item in l" @mouseover="test" style="cursor: pointer">
+              {{ item }}
+            </li>
+          </ul>
+        </div>
+      </div>
+  
+      <img v-bind:src="noteViewer">
     
+
     </div>
     <div class="col-9" v-html="result" id="result"></div>
   </div>
 
 </div>
 
-<script>
-    const app = new Vue({
-        el: '#app',
-        data: {
-            tabs: "",
-            title: "",
-            result: ""
-        },
-        computed: {
-            model: function () {
-                const lines = this.tabs.split("\n");
-                const array = lines.map(e => {
-                    const elements = e.split(" ");
-                    const note = elements[0];
-                    const arrows = elements[1];
-                    const rep = parseInt(elements[2]);
-                    return {note: note, arrows: arrows, repeat: rep};
-                });
-                return {title: this.title, tabs: array};
-            }
-        },
-        watch: {
-            model: function (value, old) {
-                console.log(value);
-                axios.post('https://cotabs.florentpastor.com/markdown', {
-                // axios.post('http://localhost:3000/markdown', {
-                    body: value
-                }).then(response => {
-                    const converter = new showdown.Converter();
-                    converter.setOption('tables', 'true');
-                    const text = response.data;
-                    this.result = converter.makeHtml(text);
-                }).catch(e => {
-                    console.log(e)
-                });
-            }
-        }
-    });
-
-    function generatePDF() {
-        // Choose the element that our invoice is rendered in.
-        const element = document.getElementById("result");
-        // Choose the element and save the PDF for our user.
-        html2pdf()
-            .from(element)
-            .save();
-    }
-</script>
-
-<style>
-  td {
-    border: 1px solid black;
-    font-size: 35px;
-    padding: 0 25px;
-  }
-</style>
+<script src="script.js"></script>
 
 </body>
 </html>
