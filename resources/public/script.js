@@ -14,6 +14,7 @@ const app = new Vue({
     },
     computed: {
         model: function () {
+            const self = this;
             const lines = this.tabs.split("\n");
             const array = lines.map(e => {
                 const elements = e.split(" ");
@@ -22,7 +23,7 @@ const app = new Vue({
                 const rep = parseInt(elements[2]);
                 return {note: note, arrows: arrows, repeat: rep};
             });
-            return {title: this.title, tabs: array, rawText: this.tabs};
+            return {title: this.title, tabs: array, rawText: self.tabs};
         },
         noteViewer: function () {
             return "images/" + this.mouseOver + ".png"
