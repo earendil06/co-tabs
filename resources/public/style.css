@@ -3,3 +3,7 @@ td {
     font-size: 35px;
     padding: 0 25px;
 }
+
+.navbar-nav li {
+    padding-right: 15px;
+}

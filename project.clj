@@ -10,8 +10,9 @@
                  [http-kit "2.3.0"]
                  [ring/ring-defaults "0.3.2"]
                  [org.clojure/data.json "0.2.6"]
-                 ]
+                 [yogthos/config "1.1.7"]]
   :repl-options {:init-ns co-tabs.core}
-  :profiles
-  {:uberjar {:aot :all}}
+  :profiles {:prod {:resource-paths ["config/prod"]}
+             :dev {:resource-paths ["config/dev"]}
+             :uberjar {:aot :all }}
   :main co-tabs.core)

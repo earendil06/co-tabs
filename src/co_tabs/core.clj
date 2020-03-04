@@ -4,7 +4,8 @@
             [compojure.route :as route]
             [ring.middleware.defaults :refer :all]
             [clojure.data.json :as json]
-            [ring.util.request :refer [character-encoding]])
+            [ring.util.request :refer [character-encoding]]
+            [config.core :refer [env]])
   (:gen-class))
 
 (require '[clojure.java.io :as io])
@@ -24,6 +25,21 @@
              tabs)))
 
 
+(defn extract-title [data]
+  (if (empty? (:title data)) "No title" (:title data)))
+
+(defn extract-lines [data]
+  (let [rawText (:rawText data)
+        lines (filter #(not (empty? %)) (map #(filter (fn [s] (not (.isEmpty s))) (.split (.trim %) " ")) (.split rawText "\n")))
+        descriptions (map (fn [line] {:note (first line) :arrows (if (empty? (rest line)) (list) (second line)) :repeat
+                                            (if (empty? (rest (rest line))) 1 (Integer/parseInt (second (rest line))))}) lines)]
+    (map (fn [elt] {:tabs elt})
+         (partition 4 4 nil
+                    (flat-tabs descriptions)))))
+
+
+
+
 (defn markdown [req]
   {:status  200
    :headers {"Content-Type" "text/json"}
@@ -31,10 +47,9 @@
                       encoding (or (character-encoding req) "UTF-8")
                       body-string (slurp p :encoding encoding)
                       data (:body (json/read-json body-string))
-                      model {:title (if (empty? (:title data)) "No title" (:title data))
-                             :lines (map (fn [elt] {:tabs elt}) (partition 4 4 nil (flat-tabs (:tabs data))))}
+                      model {:title (extract-title data)
+                             :lines (extract-lines data)}
                       result (render-resource "templates/markdown.mustache" model)]
-                  (println model)
                   result))})
 
 
@@ -42,18 +57,13 @@
          (let [file-seq (map str (file-seq (clojure.java.io/file "resources/public/images")))
                only-png (filter #(.endsWith % ".png") file-seq)
                names (map #(last (.split % "/")) only-png)
-               no-exts (map #(.replaceAll % ".png" "") names)]
-           (group-by first no-exts)))
-
-(defn notes [req]
-  {:status  200
-   :headers {"Content-Type" "text/json"}
-   :body    (json/write-str list-notes)})
+               no-exts (map #(.replaceAll % ".png" "") names)
+               l (group-by (fn [col] (.toString (first col))) (sort no-exts))]
+           (map (fn [x] {:name (key x) :elts (val x)}) l)))
 
 (defroutes app-routes
-           (GET "/" [] (io/resource "public/index.html"))
+           (GET "/" [] (render-resource "public/index.html" {:host (:host env) :notes list-notes}))
            (POST "/markdown" [] markdown)
-           (GET "/notes" [] notes)
            (route/not-found "Error, page not found!"))
 
 (defn -main [& args]

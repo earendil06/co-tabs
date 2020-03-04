@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{{=<% %>=}}
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,68 +29,160 @@
 <script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-firestore.js"></script>
 
-
-<div class="container-fluid" id="app">
-  <div class="row">
-    <div class="input-group mb-3 col">
-      <div class="input-group-prepend">
-        <span class="input-group-text" id="user">Email</span>
+<div id="app">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand">Co tabs!</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+              aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarResponsive">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item active" style="padding-left: 15px" v-if="!logged">
+            <input type="text" class="form-control form-control-sm" aria-label="Sizing example input"
+                   placeholder="Email"
+                   aria-describedby="user" id="username" v-model="email">
+          </li>
+          <li class="nav-item" v-if="!logged">
+            <input type="password" class="form-control form-control-sm" aria-label="Sizing example input"
+                   id="password" placeholder="password" v-model="password">
+          </li>
+          <li class="nav-item" v-if="logged">
+            <p style="color: white">Welcome <b>{{firebaseEmail}}</b></p>
+          </li>
+          <li class="nav-item">
+            <button class="btn-primary btn btn-sm" @click="logoutFirebase" v-if="logged">Logout</button>
+            <button class="btn-primary btn btn-sm" @click="loginFirebase" v-else>Login</button>
+          </li>
+        </ul>
       </div>
-      <input type="text" class="form-control" aria-label="Sizing example input"
-             aria-describedby="user" id="username">
     </div>
-    <div class="input-group mb-3 col">
-      <div class="input-group-prepend">
-        <span class="input-group-text" id="pass">Password</span>
-      </div>
-      <input type="password" class="form-control" aria-label="Sizing example input"
-             aria-describedby="pass" id="password">
-    </div>
-    <div class="col">
-      <button onclick="login()">Login</button>
-    </div>
-  </div>
+  </nav>
   
-  <div class="row">
-    <div class="col-3">
-      <div class="input-group mb-3">
-        <div class="input-group-prepend">
-          <span class="input-group-text" id="title">Title</span>
+  <div class="container-fluid" style="padding-top: 15px" v-if="logged">
+    <div class="row">
+      
+      <div class="col-3">
+        
+        
+        <div class="card">
+          <div class="card-header">
+            My library
+            <button class="btn-primary btn btn-sm" style="float: right" data-toggle="modal" data-target="#newModal">New
+            </button>
+            <div class="modal fade" id="newModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Create new</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <div class="input-group mb-3">
+                      <div class="input-group-prepend">
+                        <span class="input-group-text" id="titleModal">Title</span>
+                      </div>
+                      <input type="text" class="form-control" aria-label="Sizing example input"
+                             aria-describedby="titleModal" v-model="inputModal">
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" @click="createMusic" v-bind:disabled="inputModal === ''" data-dismiss="modal">Save changes</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="list-group">
+              <button type="button" @click="loadOnline(music.title)" class="list-group-item list-group-item-action" v-for="music in musicsDb">{{music.title}}</button>
+            </div>
+            
+          </div>
         </div>
-        <input type="text" class="form-control" aria-label="Sizing example input"
-               aria-describedby="title" v-model="title">
+      
+      
       </div>
       
-      <div class="form-group">
-        <label for="tabs">Tabs:</label>
-        <textarea class="form-control" id="tabs" v-model="tabs" rows="3"></textarea>
-      </div>
+      <div class="col-3">
+        <div class="card">
+          <div class="card-header">
+            Editor
+          </div>
+          <div class="card-body">
+            <div class="input-group mb-3" style="display: none">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="title">Title</span>
+              </div>
+              <input type="text" class="form-control" aria-label="Sizing example input"
+                     aria-describedby="title" v-model="title">
+            </div>
+            
+            <div class="form-group">
+              <label for="tabs">Tabs:</label>
+              <textarea style="height: 150px" class="form-control" id="tabs" v-model="editor" v-bind:disabled="title === ''" rows="3"></textarea>
+            </div>
   
-      <button onclick="generatePDF()">Download as PDF</button>
   
-      <div style="padding-top: 30px">Notes:</div>
-      <div class="row">
-        <div class="col" v-for="(l, name) in notes">
-          <ul>
-            <li v-for="item in l" @mouseover="test" style="cursor: pointer">
-              {{ item }}
-            </li>
-          </ul>
+            <div style="padding-top: 30px">Notes:</div>
+            <div class="row">
+              <%#notes%>
+              <div class="col">
+                <ul>
+                  <%#elts%>
+                  <li style="cursor: pointer" @mouseOver="mouseOverNote" @mouseOut="mouseOutNote"><%.%>
+                  </li>
+                  <%/elts%>
+                </ul>
+              </div>
+              <%/notes%>
+              <div class="col">
+                <img v-if="noteViewerSrc !== ''" v-bind:src="noteViewerSrc">
+              </div>
+  
+            </div>
+          </div>
         </div>
+        
+        
+        
+        
+        <!--        <ul>-->
+        <!--          <li v-for="item in store" @click="clickStore" style="cursor: pointer">-->
+        <!--            {{ item.title }}-->
+        <!--          </li>-->
+        <!--        </ul>-->
       </div>
-  
-      <img v-bind:src="noteViewer">
-      <ul>
-        <li v-for="item in store" @click="clickStore" style="cursor: pointer">
-          {{ item.title }}
-        </li>
-      </ul>
+      
+      <div class="col-6">
+        
+        <div class="card">
+          <div class="card-header">
+            Result
+            <button class="btn-primary btn btn-sm" @click="downloadAsPDF" v-bind:disabled="downloadDisabled"
+                    style="float: right">Download PDF
+            </button>
+          </div>
+          <div class="card-body" v-html="resultHtml" id="result">
+          </div>
+        </div>
+      
+      
+      </div>
     </div>
-    <div class="col-9" v-html="result" id="result"></div>
+  
   </div>
-
+  
+  <div class="container-fluid" style="padding-top: 15px" v-else></div>
 </div>
 
+<script>
+    const url = "<%host%>";
+</script>
 <script src="script.js"></script>
 
 </body>

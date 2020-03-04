@@ -1,7 +1,7 @@
 FROM clojure as build
 WORKDIR /app
 ADD . /app/
-RUN lein do clean, uberjar
+RUN lein do clean, with-profile prod uberjar
 
 FROM java:8-alpine as deploy
 WORKDIR /app
