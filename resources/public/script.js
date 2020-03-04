@@ -82,7 +82,6 @@ const app = new Vue({
             this.title = this.inputModal;
             this.editor = "";
             db.collection(firebase.auth().currentUser.uid).doc(this.inputModal).set(this.model);
-            this.inputModal = "";
         },
         loadOnline: function(title) {
             const found = this.musicsDb.find(e => e.title === title);
