@@ -11,55 +11,60 @@
 (require '[clojure.java.io :as io])
 (use 'clostache.parser)
 
-(defn extract-arrows [str-arrows]
-  (let [ignore-bad-character (filter #(or (= % \d) (= % \u)) str-arrows)]
-    (map #(if (= % \u) 8593 8595) ignore-bad-character)))
 
-(defn extract-repeat [elt]
-  (if (nil? (:repeat elt)) 1 (:repeat elt)))
+(defn arrow-str->arrows-codes [arrow-string]
+  (let [ignore-bad-character (filter #{\d \u} arrow-string)
+        mapping {\u 8593 \d 8595}
+        get-map (partial get mapping)]
+    (map get-map ignore-bad-character)))
+
+
+(defn make-tab
+  [note arrow-string]
+  {:image note :arrows (arrow-str->arrows-codes arrow-string)})
+
 
 (defn flat-tabs
-  [tabs]
-  (flatten (map
-             #(repeat (extract-repeat %) {:image (:note %) :arrows (extract-arrows (:arrows %))})
-             tabs)))
+  [list-tabs]
+  (flatten (map #(repeat (:repeat %) (make-tab (:note %) (:arrows %))) list-tabs)))
+
+(defn extract-tabs [rawtext]
+  (let [lines (remove empty? (map #(remove empty? (.split % " ")) (.split rawtext "\n")))
+        structured-lines (map #(let [[n a r] %] {:note n :arrows (or a "") :repeat (Integer/parseInt (or r "1"))}) lines)]
+    (flat-tabs structured-lines)))
 
 
-(defn extract-title [data]
-  (if (empty? (:title data)) "No title" (:title data)))
-
-(defn extract-lines [data]
-  (let [rawText (:rawText data)
-        lines (filter #(not (empty? %)) (map #(filter (fn [s] (not (.isEmpty s))) (.split (.trim %) " ")) (.split rawText "\n")))
-        descriptions (map (fn [line] {:note (first line) :arrows (if (empty? (rest line)) (list) (second line)) :repeat
-                                            (if (empty? (rest (rest line))) 1 (Integer/parseInt (second (rest line))))}) lines)]
-    (map (fn [elt] {:tabs elt})
-         (partition 4 4 nil
-                    (flat-tabs descriptions)))))
-
-
-
+(defn extract-body-from-request [req]
+  (let [p (:body req)
+        encoding (or (character-encoding req) "UTF-8")
+        body-string (slurp p :encoding encoding)
+        data (:body (json/read-json body-string))]
+    data))
 
 (defn markdown [req]
   {:status  200
    :headers {"Content-Type" "text/json"}
-   :body    (-> (let [p (:body req)
-                      encoding (or (character-encoding req) "UTF-8")
-                      body-string (slurp p :encoding encoding)
-                      data (:body (json/read-json body-string))
-                      model {:title (extract-title data)
-                             :lines (extract-lines data)}
+   :body    (-> (let [data (extract-body-from-request req)
+                      number-by-line 4
+                      model {:title (:title data)
+                             :lines (map (partial assoc {} :tabs)
+                                         (partition number-by-line number-by-line nil (extract-tabs (:rawText data))))}
                       result (render-resource "templates/markdown.mustache" model)]
                   result))})
 
 
+(defn extract-name-path [path]
+  (last (.split path "/")))
+
+(defn remove-extension [name]
+  (.replaceAll name ".png" ""))
+
 (defonce list-notes
          (let [file-seq (map str (file-seq (clojure.java.io/file "resources/public/images")))
                only-png (filter #(.endsWith % ".png") file-seq)
-               names (map #(last (.split % "/")) only-png)
-               no-exts (map #(.replaceAll % ".png" "") names)
-               l (group-by (fn [col] (.toString (first col))) (sort no-exts))]
-           (map (fn [x] {:name (key x) :elts (val x)}) l)))
+               res (map (comp extract-name-path remove-extension) only-png)
+               groups-by-note (group-by #(.toString (first %)) (sort res))]
+           (map #(assoc {} :name (key %) :note-set (val %)) groups-by-note)))
 
 (defroutes app-routes
            (GET "/" [] (render-resource "public/index.html" {:host (:host env) :notes list-notes}))
