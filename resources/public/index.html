@@ -13,6 +13,7 @@
       integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css">
 
 <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
         integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
@@ -69,8 +70,7 @@
         <div class="card">
           <div class="card-header">
             My library
-            <button class="btn-primary btn btn-sm" style="float: right" data-toggle="modal" data-target="#newModal">New
-            </button>
+            <button class="btn-primary btn btn-sm" style="float: right" data-toggle="modal" data-target="#newModal">New</button>
             <div class="modal fade" id="newModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
               <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -98,9 +98,23 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="list-group">
-              <button type="button" @click="loadOnline(music.title)" class="list-group-item list-group-item-action" v-for="music in musicsDb">{{music.title}}</button>
-            </div>
+            <ul class="list-group">
+              <li class="list-group-item" v-for="music in musicsDb">
+                <span>
+                  {{music.title}}
+                </span>
+                <button style="float: right" @click="loadOnline(music.title)" type="button" class="btn btn-primary btn-sm">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button style="float: right" @click="rmOnline(music.title)" type="button" class="btn btn-danger btn-sm">
+                  <i class="fas fa-times"></i>
+                </button>
+              </li>
+<!--              <button type="button" @click="loadOnline(music.title)" class="list-group-item list-group-item-action" v-for="music in musicsDb">-->
+<!--                {{music.title}}-->
+<!--                -->
+<!--              </button>-->
+            </ul>
             
           </div>
         </div>

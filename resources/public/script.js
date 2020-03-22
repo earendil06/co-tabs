@@ -87,6 +87,10 @@ const app = new Vue({
             const found = this.musicsDb.find(e => e.title === title);
             this.title = found.title;
             this.editor = found.rawText;
+        },
+        rmOnline: function(title) {
+            const found = this.musicsDb.find(e => e.title === title);
+            db.collection(firebase.auth().currentUser.uid).doc(found.title).delete();
         }
     }
 });
@@ -102,3 +106,8 @@ firebase.auth().onAuthStateChanged(function (user) {
             app.musicsDb = tabs;
         });
 });
+
+// $('#newModal').on('show.bs.modal', function (e) {
+//     debugger;
+//     app.inputModal = "";
+// });
