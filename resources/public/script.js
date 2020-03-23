@@ -119,6 +119,6 @@ firebase.auth().onAuthStateChanged(function (user) {
         });
 });
 
-$('#newModal').on('show.bs.modal', function (e) {
+$('#libraryModal').on('show.bs.modal', function (e) {
     app.inputModal = "";
 });
