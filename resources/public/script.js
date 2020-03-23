@@ -21,11 +21,13 @@ const app = new Vue({
         password: "",
         user: null,
         resultHtml: "",
-        inputModal: ""
+        inputModal: "",
+        titleToRemove: "",
+        coid: ""
     },
     computed: {
         model: function () {
-            return {title: this.title, rawText: this.editor};
+            return {coid: this.coid, title: this.title, rawText: this.editor};
         },
         logged: function () {
             return this.user != null;
@@ -52,7 +54,7 @@ const app = new Vue({
                 const converter = new showdown.Converter();
                 converter.setOption('tables', 'true');
                 this.resultHtml = converter.makeHtml(response.data);
-                db.collection(firebase.auth().currentUser.uid).doc(this.title).set(value);
+                db.collection(firebase.auth().currentUser.uid).doc(this.coid).set(value);
             });
 
         }
@@ -81,16 +83,26 @@ const app = new Vue({
         createMusic: function () {
             this.title = this.inputModal;
             this.editor = "";
-            db.collection(firebase.auth().currentUser.uid).doc(this.inputModal).set(this.model);
+            this.coid = Math.random().toString(36).substring(7);
+            db.collection(firebase.auth().currentUser.uid).doc(this.coid).set(this.model);
         },
-        loadOnline: function(title) {
-            const found = this.musicsDb.find(e => e.title === title);
+        loadOnline: function(coid) {
+            const found = this.musicsDb.find(e => e.coid === coid);
             this.title = found.title;
             this.editor = found.rawText;
+            this.coid = found.coid;
         },
-        rmOnline: function(title) {
-            const found = this.musicsDb.find(e => e.title === title);
-            db.collection(firebase.auth().currentUser.uid).doc(found.title).delete();
+        rmOnline: function () {
+            const found = this.musicsDb.find(e => e.coid === this.coidToRemove);
+            db.collection(firebase.auth().currentUser.uid).doc(found.coid).delete();
+            if (this.coidToRemove === this.coid) {
+                this.title = "";
+                this.editor = "";
+                this.coid = "";
+            }
+        },
+        setCoidToRemove: function (coid) {
+            this.coidToRemove = coid;
         }
     }
 });
@@ -107,7 +119,6 @@ firebase.auth().onAuthStateChanged(function (user) {
         });
 });
 
-// $('#newModal').on('show.bs.modal', function (e) {
-//     debugger;
-//     app.inputModal = "";
-// });
+$('#newModal').on('show.bs.modal', function (e) {
+    app.inputModal = "";
+});

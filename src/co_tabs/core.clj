@@ -13,8 +13,8 @@
 
 
 (defn arrow-str->arrows-codes [arrow-string]
-  (let [ignore-bad-character (filter #{\d \u \) \(} arrow-string)
-        mapping {\u 8593 \d 8595 \( 40 \) 41}
+  (let [ignore-bad-character (filter #{\d \u \) \( \_} arrow-string)
+        mapping {\u "#8593" \d "#8595" \( "#40" \) "#41" \_ "nbsp"}
         get-map (partial get mapping)]
     (map get-map ignore-bad-character)))
 

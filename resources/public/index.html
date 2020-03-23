@@ -71,31 +71,6 @@
           <div class="card-header">
             My library
             <button class="btn-primary btn btn-sm" style="float: right" data-toggle="modal" data-target="#newModal">New</button>
-            <div class="modal fade" id="newModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-              <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Create new</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                      <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>
-                  <div class="modal-body">
-                    <div class="input-group mb-3">
-                      <div class="input-group-prepend">
-                        <span class="input-group-text" id="titleModal">Title</span>
-                      </div>
-                      <input type="text" class="form-control" aria-label="Sizing example input"
-                             aria-describedby="titleModal" v-model="inputModal">
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" @click="createMusic" v-bind:disabled="inputModal === ''" data-dismiss="modal">Save changes</button>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           <div class="card-body">
             <ul class="list-group">
@@ -103,23 +78,17 @@
                 <span>
                   {{music.title}}
                 </span>
-                <button style="float: right" @click="loadOnline(music.title)" type="button" class="btn btn-primary btn-sm">
+                <button style="float: right" @click="loadOnline(music.coid)" type="button" class="btn btn-primary btn-sm">
                   <i class="fas fa-pen"></i>
                 </button>
-                <button style="float: right" @click="rmOnline(music.title)" type="button" class="btn btn-danger btn-sm">
+                <button @click="setCoidToRemove(music.coid)" style="float: right" type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rmModal">
                   <i class="fas fa-times"></i>
                 </button>
               </li>
-<!--              <button type="button" @click="loadOnline(music.title)" class="list-group-item list-group-item-action" v-for="music in musicsDb">-->
-<!--                {{music.title}}-->
-<!--                -->
-<!--              </button>-->
             </ul>
             
           </div>
         </div>
-      
-      
       </div>
       
       <div class="col-3">
@@ -128,12 +97,12 @@
             Editor
           </div>
           <div class="card-body">
-            <div class="input-group mb-3" style="display: none">
+            <div class="input-group mb-3">
               <div class="input-group-prepend">
                 <span class="input-group-text" id="title">Title</span>
               </div>
               <input type="text" class="form-control" aria-label="Sizing example input"
-                     aria-describedby="title" v-model="title">
+                     aria-describedby="title" v-model="title" v-bind:disabled="title === ''">
             </div>
             
             <div class="form-group">
@@ -161,15 +130,6 @@
             </div>
           </div>
         </div>
-        
-        
-        
-        
-        <!--        <ul>-->
-        <!--          <li v-for="item in store" @click="clickStore" style="cursor: pointer">-->
-        <!--            {{ item.title }}-->
-        <!--          </li>-->
-        <!--        </ul>-->
       </div>
       
       <div class="col-6">
@@ -194,6 +154,49 @@
   <div class="container-fluid" style="padding-top: 15px" v-else>
     <div class="alert alert-dark" role="alert">
       Please login in order to use this amazing tool !
+    </div>
+  </div>
+  
+  <div class="modal fade" id="newModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Create new</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <span class="input-group-text" id="titleModal">Title</span>
+            </div>
+            <input type="text" class="form-control" aria-label="Sizing example input"
+                   aria-describedby="titleModal" v-model="inputModal">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" @click="createMusic" v-bind:disabled="inputModal === ''" data-dismiss="modal">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal fade" id="rmModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Are you sure ?</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No, keep it</button>
+          <button type="button" class="btn btn-danger" @click="rmOnline" data-dismiss="modal">Yes, remove it</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
