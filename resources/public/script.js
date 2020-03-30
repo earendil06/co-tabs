@@ -10,6 +10,46 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+const recordAudio = () => {
+    return new Promise(resolve => {
+        navigator.mediaDevices.getUserMedia({audio: true})
+            .then(stream => {
+                const mediaRecorder = new MediaRecorder(stream);
+                const audioChunks = [];
+
+                mediaRecorder.addEventListener("dataavailable", event => {
+                    audioChunks.push(event.data);
+                });
+
+                const start = () => {
+                    mediaRecorder.start();
+                };
+
+                const stop = () => {
+                    return new Promise(resolve => {
+                        mediaRecorder.addEventListener("stop", () => {
+                            const audioBlob = new Blob(audioChunks);
+                            const audioUrl = URL.createObjectURL(audioBlob);
+                            const audio = new Audio(audioUrl);
+                            const play = () => {
+                                audio.play();
+                            };
+
+                            resolve({audioBlob, audioUrl, play});
+                        });
+
+                        mediaRecorder.stop();
+                    });
+                };
+
+                resolve({start, stop});
+            });
+    });
+};
+
+const MODE_EDIT = "edit";
+const MODE_VIEW = "view";
+
 const app = new Vue({
     el: '#app',
     data: {
@@ -24,11 +64,20 @@ const app = new Vue({
         inputModal: "",
         titleToRemove: "",
         coid: "",
-        listURLAudio: []
+        listURLAudio: [],
+        recorder: null,
+        mode: MODE_EDIT,
+        lyrics: ""
     },
     computed: {
+        isModeView: function () {
+            return this.mode === MODE_VIEW;
+        },
+        isModeEdit: function () {
+            return this.mode === MODE_EDIT;
+        },
         model: function () {
-            return {coid: this.coid, title: this.title, rawText: this.editor};
+            return {coid: this.coid, title: this.title, rawText: this.editor, lyrics: this.lyrics};
         },
         logged: function () {
             return this.user != null;
@@ -56,7 +105,7 @@ const app = new Vue({
     watch: {
         model: function (value, old) {
             console.log(value);
-            axios.post(url + '/markdown', {
+            axios.post('/markdown', {
                 body: value
             }).then((response) => {
                 const converter = new showdown.Converter();
@@ -67,6 +116,9 @@ const app = new Vue({
 
         },
         listRecords: function (value, old) {
+            if (value.length === old.length) {
+                return;
+            }
             const self = this;
             this.listURLAudio = [];
             const found = this.musicsDb.find(e => e.coid === this.coid);
@@ -74,7 +126,7 @@ const app = new Vue({
                 const starsRef = firebase.storage().ref();
                 found.records.forEach(e => {
                     const child = starsRef.child(firebase.auth().currentUser.uid + "/" + e);
-                    child.getDownloadURL().then(function(url) {
+                    child.getDownloadURL().then(function (url) {
                         self.listURLAudio.push({
                             url: url,
                             name: e
@@ -85,6 +137,12 @@ const app = new Vue({
         }
     },
     methods: {
+        switchModeView: function () {
+            this.mode = MODE_VIEW;
+        },
+        switchModeEdit: function () {
+            this.mode = MODE_EDIT;
+        },
         mouseOverNote: function (event) {
             this.mouseOver = event.target.innerText;
         },
@@ -108,6 +166,7 @@ const app = new Vue({
         createMusic: function () {
             this.title = this.inputModal;
             this.editor = "";
+            this.lyrics = "";
             this.coid = Math.random().toString(36).substring(7);
             db.collection(firebase.auth().currentUser.uid).doc(this.coid).set(this.model);
         },
@@ -116,6 +175,7 @@ const app = new Vue({
             this.title = found.title;
             this.editor = found.rawText;
             this.coid = found.coid;
+            this.lyrics = found.lyrics;
         },
         rmOnline: function () {
             const found = this.musicsDb.find(e => e.coid === this.coidToRemove);
@@ -124,6 +184,7 @@ const app = new Vue({
                 this.title = "";
                 this.editor = "";
                 this.coid = "";
+                this.lyrics = "";
             }
         },
         setCoidToRemove: function (coid) {
@@ -132,9 +193,26 @@ const app = new Vue({
         removeAudio: function (name) {
             const storageRef = firebase.storage().ref();
             const child = storageRef.child(firebase.auth().currentUser.uid + '/' + name);
-            child.delete().then(function(snapshot) {
+            child.delete().then(function (snapshot) {
                 db.collection(firebase.auth().currentUser.uid).doc(app.coid).set(
                     {records: firebase.firestore.FieldValue.arrayRemove(name)}, {merge: true}
+                );
+            });
+        },
+
+        startAudio: async function () {
+            this.recorder = await recordAudio();
+            this.recorder.start();
+        },
+        stopAudio: async function () {
+            const self = this;
+            const audio = await self.recorder.stop();
+            const storageRef = firebase.storage().ref();
+            const name = Math.random().toString(36).substring(7);
+            const child = storageRef.child(firebase.auth().currentUser.uid + '/' + name);
+            child.put(audio.audioBlob).then(function (snapshot) {
+                db.collection(firebase.auth().currentUser.uid).doc(self.coid).set(
+                    {records: firebase.firestore.FieldValue.arrayUnion(name)}, {merge: true}
                 );
             });
         }

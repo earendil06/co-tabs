@@ -64,13 +64,13 @@
     data))
 
 (defn index [req]
-  (render-resource "public/index.html" {:host (:host env) :notes list-notes}))
+  (render-resource "public/index.html" {:notes list-notes}))
 
 (defn markdown [req]
   {:status  200
    :headers {"Content-Type" "text/json"}
    :body    (-> (let [data (extract-body-from-request req)
-                      number-by-line 4
+                      number-by-line 5
                       model {:title (:title data)
                              :lines (map (partial assoc {} :tabs)
                                          (partition number-by-line number-by-line nil
