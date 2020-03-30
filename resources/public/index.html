@@ -237,7 +237,13 @@
 <script>
     const recordAudio = () => {
         return new Promise(resolve => {
-            navigator.mediaDevices.getUserMedia({audio: true})
+            navigator.mediaDevices.getUserMedia({audio: {
+                    echoCancellation: false,
+                    channelCount: 2,
+                    noiseSuppression: true,
+                    autoGainControl: false,
+                    googAutoGainControl: false
+                }})
                 .then(stream => {
                     const mediaRecorder = new MediaRecorder(stream);
                     const audioChunks = [];
