@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 {{=<% %>=}}
 <html lang="en">
 <head>
@@ -7,6 +7,7 @@
 </head>
 <body>
 <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/1.9.1/showdown.min.js"></script>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -29,6 +30,7 @@
 <script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.9.2/firebase-storage.js"></script>
 
 <div id="app">
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -71,6 +73,15 @@
         <div class="card">
           <div class="card-header">
             Editor
+            <button class="btn-danger btn btn-sm" style="float: right" onclick="stopAudio()"
+                    v-bind:disabled="title === ''">
+              <i class="fas fa-stop"></i>
+            </button>
+            <button class="btn-success btn btn-sm" style="float: right" onclick="startAudio()"
+                    v-bind:disabled="title === ''">
+              <i class="fas fa-play"></i>
+            </button>
+            <span style="float: right"><i><b>recorder:</b></i></span>
           </div>
           <div class="card-body">
             <div class="input-group mb-3">
@@ -83,10 +94,32 @@
             
             <div class="form-group">
               <label for="tabs">Tabs:</label>
-              <textarea style="height: 150px" class="form-control" id="tabs" v-model="editor" v-bind:disabled="title === ''" rows="3"></textarea>
+              <textarea style="height: 150px" class="form-control" id="tabs" v-model="editor"
+                        v-bind:disabled="title === ''" rows="3"></textarea>
             </div>
-  
-  
+            
+            <div class="row" v-if="listURLAudio.length > 0">
+              <div class="col-12">Records:</div>
+              <div class="col-12">
+                <table>
+                  <tr v-for="item in listURLAudio">
+                    <td>{{item.name}}</td>
+                    <td>
+                      <audio controls v-bind:src="item.url">
+                        Your browser does not support the
+                        <code>audio</code> element.
+                      </audio>
+                    </td>
+                    <td>
+                      <button class="btn-danger btn btn-sm" @click="removeAudio(item.name)">
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+            
             <div style="padding-top: 30px">Notes:</div>
             <div class="row">
               <%#notes%>
@@ -102,8 +135,9 @@
               <div class="col">
                 <img v-if="noteViewerSrc !== ''" v-bind:src="noteViewerSrc">
               </div>
-  
+            
             </div>
+          
           </div>
         </div>
       </div>
@@ -121,7 +155,6 @@
           </div>
         </div>
       
-      
       </div>
     </div>
   
@@ -134,7 +167,8 @@
   </div>
   
   
-  <div class="modal fade" id="libraryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal fade" id="libraryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+       aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -149,10 +183,12 @@
                 <span>
                   {{music.title}}
                 </span>
-              <button data-dismiss="modal" style="float: right" @click="loadOnline(music.coid)" type="button" class="btn btn-primary btn-sm">
+              <button data-dismiss="modal" style="float: right" @click="loadOnline(music.coid)" type="button"
+                      class="btn btn-primary btn-sm">
                 <i class="fas fa-pen"></i>
               </button>
-              <button @click="setCoidToRemove(music.coid)" style="float: right; margin-right: 15px" type="button" class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rmModal">
+              <button @click="setCoidToRemove(music.coid)" style="float: right; margin-right: 15px" type="button"
+                      class="btn btn-danger btn-sm" data-toggle="modal" data-target="#rmModal">
                 <i class="fas fa-times"></i>
               </button>
             </li>
@@ -163,7 +199,9 @@
             </div>
             <input type="text" class="form-control" aria-label="Sizing example input"
                    aria-describedby="titleModal" v-model="inputModal">
-            <button type="button" class="btn btn-primary" @click="createMusic" v-bind:disabled="inputModal === ''" data-dismiss="modal">Create</button>
+            <button type="button" class="btn btn-primary" @click="createMusic" v-bind:disabled="inputModal === ''"
+                    data-dismiss="modal">Create
+            </button>
           </div>
         </div>
         <div class="modal-footer">
@@ -173,7 +211,8 @@
     </div>
   </div>
   
-  <div class="modal fade" id="rmModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal fade" id="rmModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+       aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -195,6 +234,65 @@
     const url = "<%host%>";
 </script>
 <script src="script.js"></script>
+<script>
+    const recordAudio = () => {
+        return new Promise(resolve => {
+            navigator.mediaDevices.getUserMedia({audio: true})
+                .then(stream => {
+                    const mediaRecorder = new MediaRecorder(stream);
+                    const audioChunks = [];
+
+                    mediaRecorder.addEventListener("dataavailable", event => {
+                        audioChunks.push(event.data);
+                    });
+
+                    const start = () => {
+                        mediaRecorder.start();
+                    };
+
+                    const stop = () => {
+                        return new Promise(resolve => {
+                            mediaRecorder.addEventListener("stop", () => {
+                                const audioBlob = new Blob(audioChunks);
+                                const audioUrl = URL.createObjectURL(audioBlob);
+                                const audio = new Audio(audioUrl);
+                                const play = () => {
+                                    audio.play();
+                                };
+
+                                resolve({audioBlob, audioUrl, play});
+                            });
+
+                            mediaRecorder.stop();
+                        });
+                    };
+
+                    resolve({start, stop});
+                });
+        });
+    };
+
+    let recorder = null;
+
+    async function startAudio() {
+        recorder = await recordAudio();
+        recorder.start();
+    }
+
+    async function stopAudio() {
+        const audio = await recorder.stop();
+        console.log(audio);
+        const storageRef = firebase.storage().ref();
+        const name = Math.random().toString(36).substring(7);
+        const child = storageRef.child(firebase.auth().currentUser.uid + '/' + name);
+        child.put(audio.audioBlob).then(function (snapshot) {
+            db.collection(firebase.auth().currentUser.uid).doc(app.coid).set(
+                {records: firebase.firestore.FieldValue.arrayUnion(name)}, {merge: true}
+            );
+        });
+
+    }
+</script>
 
 </body>
 </html>
