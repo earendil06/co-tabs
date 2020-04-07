@@ -98,6 +98,14 @@
               <input type="text" class="form-control" aria-label="Sizing example input"
                      aria-describedby="title" v-model="title" v-bind:disabled="title === ''">
             </div>
+  
+            <div class="form-group">
+              <label for="selectInstrument">Instrument</label>
+              <select class="form-control" id="selectInstrument" v-model="instrument" v-bind:disabled="title === ''">
+                <option>guitar</option>
+                <option>ukulele</option>
+              </select>
+            </div>
             
             <div class="form-group">
               <label for="tabs">Tabs:</label>
@@ -118,8 +126,8 @@
                 
                 <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordionExample">
                   <div class="card-body">
-                    <div class="row">
-                      <%#notes%>
+                    <div class="row" v-if="instrument === 'guitar'">
+                      <%#notes-guitar%>
                       <div class="col">
                         <ul>
                           <%#note-set%>
@@ -128,11 +136,25 @@
                           <%/note-set%>
                         </ul>
                       </div>
-                      <%/notes%>
+                      <%/notes-guitar%>
                       <div class="col">
                         <img v-if="noteViewerSrc !== ''" v-bind:src="noteViewerSrc">
                       </div>
-                    
+                    </div>
+                    <div class="row" v-else>
+                      <%#notes-ukulele%>
+                      <div class="col">
+                        <ul>
+                          <%#note-set%>
+                          <li style="cursor: pointer" @mouseOver="mouseOverNote" @mouseOut="mouseOutNote"><%.%>
+                          </li>
+                          <%/note-set%>
+                        </ul>
+                      </div>
+                      <%/notes-ukulele%>
+                      <div class="col">
+                        <img v-if="noteViewerSrc !== ''" v-bind:src="noteViewerSrc">
+                      </div>
                     </div>
                   </div>
                 </div>

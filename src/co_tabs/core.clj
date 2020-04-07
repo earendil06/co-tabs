@@ -34,26 +34,29 @@
 (defn remove-extension [name]
   (.replaceAll name ".png" ""))
 
-(defonce list-notes
-         (let [file-seq (map str (file-seq (clojure.java.io/file "resources/public/images")))
+(defn list-notes [instrument]
+         (let [file-seq (map str (file-seq (clojure.java.io/file (str "resources/public/images/" instrument))))
                only-png (filter #(.endsWith % ".png") file-seq)
                res (map (comp extract-name-path remove-extension) only-png)
                groups-by-note (group-by #(.toString (first %)) (sort res))]
            (map #(assoc {} :name (key %) :note-set (val %)) groups-by-note)))
+
+(defonce list-notes-guitar (list-notes "guitar"))
+(defonce list-notes-ukulele (list-notes "ukulele"))
 
 (defn find-first [f coll]
   (first (filter f coll)))
 
 (def not-nil? (complement nil?))
 
-(defn note-exists? [note]
-  (let [group (find-first #(= (:name %) (str (first note))) list-notes)]
+(defn note-exists? [note instrument]
+  (let [group (find-first #(= (:name %) (str (first note))) (if (= instrument "guitar") list-notes-guitar list-notes-ukulele))]
     (not-nil? (some #{note} (:note-set group)))))
 
-(defn extract-tabs [rawtext]
+(defn extract-tabs [rawtext instrument]
   (let [lines (remove empty? (map #(remove empty? (.split % " ")) (.split rawtext "\n")))
         structured-lines (map #(let [[n a r] %] {:note n :arrows (or a "") :repeat (Integer/parseInt (or r "1"))}) lines)
-        remove-non-existing-notes (filter #(note-exists? (:note %)) structured-lines)]
+        remove-non-existing-notes (filter #(note-exists? (:note %) instrument) structured-lines)]
     (flat-tabs remove-non-existing-notes)))
 
 (defn extract-body-from-request [req]
@@ -64,7 +67,7 @@
     data))
 
 (defn index [req]
-  (render-resource "public/index.html" {:notes list-notes}))
+  (render-resource "public/index.html" {:notes-guitar list-notes-guitar :notes-ukulele list-notes-ukulele}))
 
 (defn markdown [req]
   {:status  200
@@ -72,9 +75,10 @@
    :body    (-> (let [data (extract-body-from-request req)
                       number-by-line 5
                       model {:title (:title data)
+                             :instrument (:instrument data)
                              :lines (map (partial assoc {} :tabs)
                                          (partition number-by-line number-by-line nil
-                                                    (extract-tabs (:rawText data))))}
+                                                    (extract-tabs (:rawText data) (:instrument data))))}
                       result (render-resource "templates/markdown.mustache" model)]
                   result))})
 

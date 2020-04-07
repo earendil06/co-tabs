@@ -67,7 +67,8 @@ const app = new Vue({
         listURLAudio: [],
         recorder: null,
         mode: MODE_EDIT,
-        lyrics: ""
+        lyrics: "",
+        instrument: "guitar"
     },
     computed: {
         isModeView: function () {
@@ -77,7 +78,13 @@ const app = new Vue({
             return this.mode === MODE_EDIT;
         },
         model: function () {
-            return {coid: this.coid, title: this.title, rawText: this.editor, lyrics: this.lyrics};
+            return {
+                coid: this.coid,
+                title: this.title,
+                rawText: this.editor,
+                lyrics: this.lyrics,
+                instrument: this.instrument
+            };
         },
         logged: function () {
             return this.user != null;
@@ -86,7 +93,7 @@ const app = new Vue({
             return this.user != null ? this.user.email : ""
         },
         noteViewerSrc: function () {
-            return this.mouseOver !== "" ? "images/" + this.mouseOver + ".png" : ""
+            return this.mouseOver !== "" ? "images/" + this.instrument + "/" + this.mouseOver + ".png" : ""
         },
         downloadDisabled: function () {
             return this.title.trim() === "" || this.editor.trim() === ""
@@ -167,6 +174,7 @@ const app = new Vue({
             this.title = this.inputModal;
             this.editor = "";
             this.lyrics = "";
+            this.instrument = "guitar";
             this.coid = Math.random().toString(36).substring(7);
             db.collection(firebase.auth().currentUser.uid).doc(this.coid).set(this.model);
         },
@@ -176,6 +184,7 @@ const app = new Vue({
             this.editor = found.rawText;
             this.coid = found.coid;
             this.lyrics = found.lyrics;
+            this.instrument = found.instrument;
         },
         rmOnline: function () {
             const found = this.musicsDb.find(e => e.coid === this.coidToRemove);
@@ -185,6 +194,7 @@ const app = new Vue({
                 this.editor = "";
                 this.coid = "";
                 this.lyrics = "";
+                this.instrument = "guitar";
             }
         },
         setCoidToRemove: function (coid) {
