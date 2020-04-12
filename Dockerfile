@@ -1,10 +1,10 @@
-FROM clojure as build
+FROM node:lts-alpine
+RUN npm install -g http-server
 WORKDIR /app
-ADD . /app/
-RUN lein do clean, with-profile prod uberjar
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-FROM java:8-alpine as deploy
-WORKDIR /app
-COPY --from=build /app/target/co-tabs-0.1.0-SNAPSHOT-standalone.jar .
-ADD . /app/
-CMD java -jar co-tabs-0.1.0-SNAPSHOT-standalone.jar
+EXPOSE 8080
+CMD [ "http-server", "dist" ]
